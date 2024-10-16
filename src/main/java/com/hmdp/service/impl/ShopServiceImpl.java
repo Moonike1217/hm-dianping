@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
-
+    //提交测试
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
