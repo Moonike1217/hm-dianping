@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
-    //提交测试
+
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
@@ -42,7 +42,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         String key = RedisConstants.CACHE_SHOP_KEY + id;
         String shopJSON = stringRedisTemplate.opsForValue().get(key);
 
-        //2.如存在，则直接返回
+        //2.判断是否存在:如存在，则直接返回
         if (StrUtil.isNotBlank(shopJSON)) {
             //先将JSON字符串转换为对象
             Shop shop = JSONUtil.toBean(shopJSON, Shop.class);
@@ -50,12 +50,21 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             return Result.ok(shop);
         }
 
+        //程序运行至此，shopJSON只有两种情况:1.为空字符串，2.为null
+        if (shopJSON != null) {
+            //shopJSON命中缓存，返回错误信息
+            return Result.fail("店铺信息不存在(Redis拦截)");
+        }
+
         //3.如不存在，则从数据库中查询
         Shop shop = getById(id);
 
-        //4.如数据库中不存在，则报错
+        //4.如数据库中不存在，则
         if (shop == null) {
-            return Result.fail("商铺不存在");
+            //4.1将空值缓存到Redis中
+            stringRedisTemplate.opsForValue().set(key, "", RedisConstants.CACHE_NULL_TTL, TimeUnit.MINUTES);
+            //4.2返回错误信息
+            return Result.fail("店铺信息不存在(数据库)");
         }
 
         //5.如数据库中存在
