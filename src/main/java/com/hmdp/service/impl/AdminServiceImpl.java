@@ -1,49 +1,44 @@
 package com.hmdp.service.impl;
 
-import cn.hutool.Hutool;
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.dto.LoginFormDTO;
 import com.hmdp.dto.Result;
 import com.hmdp.dto.UserDTO;
+import com.hmdp.entity.Admin;
 import com.hmdp.entity.User;
-import com.hmdp.mapper.UserMapper;
-import com.hmdp.service.IUserService;
+import com.hmdp.mapper.AdminMapper;
+import com.hmdp.service.IAdminService;
 import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.RegexUtils;
 import com.hmdp.utils.SystemConstants;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.logging.Log;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-
 @Slf4j
 @Service
-public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
+public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements IAdminService {
 
-    @Autowired
+    @Resource
     private StringRedisTemplate stringRedisTemplate;
 
     /**
-     * 用户登录
+     * 管理员登录
      * @param loginForm
-     * @param session
      * @return
      */
     @Override
-    public Result login(LoginFormDTO loginForm, HttpSession session) {
+    public Result login(LoginFormDTO loginForm) {
         //1.检查验证码是否与之前Redis中存放的验证码一致
         String phone = loginForm.getPhone();
         String code = loginForm.getCode();
@@ -53,49 +48,35 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             return Result.fail("验证码错误，请重试");
         }
 
-        //2.根据手机号查询用户
-        User user = query().eq("phone", phone).one();
-        if (user == null) {
-            //用户不存在 创建新用户并插入到表中
-            user = createUserWithPhone(phone);
+        //2.根据手机号查询管理员
+        Admin admin= query().eq("phone", phone).one();
+        if (admin == null) {
+            //管理员不存在 报错
+            throw new RuntimeException("管理员不存在!");
         }
 
-        //3.将UserDTO以Hash形式保存到Redis中 Key为token(字符串) Value为Hash类型的User
+        //3.将Admin以Hash形式保存到Redis中 Key为token(字符串) Value为Hash类型的Admin
         //3.1生成UUID作为token
         String token = UUID.randomUUID().toString(true);
-        //3.2将User对象转化为UserDTO
-        UserDTO userDTO = new UserDTO();
-        BeanUtils.copyProperties(user, userDTO);
-        //3.3将UserDTO转换为StringMap(方便后续使用putAll)
-        Map<String, Object> map = BeanUtil.beanToMap(userDTO);
+        //3.2将Admin转换为StringMap(方便后续使用putAll)
+        Map<String, Object> map = BeanUtil.beanToMap(admin);
         Map<String, String> stringMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             // 将 Object 转换为 String 存入新 map 中
             stringMap.put(entry.getKey(), String.valueOf(entry.getValue()));
         }
 
-        //3.4将UserDTO以Hash形式存储到Redis中
-        String tokenKey = RedisConstants.LOGIN_USER_KEY + token;
+        //3.4将Admin以Hash形式存储到Redis中
+        String tokenKey = RedisConstants.LOGIN_ADMIN_KEY + token;
         stringRedisTemplate.opsForHash().putAll(tokenKey, stringMap);
         //3.5设置token的有效期
-        stringRedisTemplate.expire(tokenKey, RedisConstants.LOGIN_USER_TTL, TimeUnit.MINUTES);
+        stringRedisTemplate.expire(tokenKey, RedisConstants.LOGIN_ADMIN_TTL, TimeUnit.MINUTES);
 
         //4.返回token
         return Result.ok(token);
     }
 
-    /**
-     * 在表中插入新用户
-     * @param phone
-     * @return
-     */
-    private User createUserWithPhone(String phone) {
-        User user = new User();
-        user.setPhone(phone);
-        user.setNickName(SystemConstants.USER_NICK_NAME_PREFIX + RandomUtil.randomString(10));
-        save(user);
-        return user;
-    }
+
 
     /**
      * 发送验证码

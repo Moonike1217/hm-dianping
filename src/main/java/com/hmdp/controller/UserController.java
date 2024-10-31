@@ -8,23 +8,19 @@ import com.hmdp.entity.UserInfo;
 import com.hmdp.service.IUserInfoService;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.UserHolder;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 
-/**
- * <p>
- * 前端控制器
- * </p>
- *
- * @author 虎哥
- * @since 2021-12-22
- */
+
 @Slf4j
 @RestController
 @RequestMapping("/user")
+@Api(tags = "用户相关接口")
 public class UserController {
 
     @Resource
@@ -37,8 +33,8 @@ public class UserController {
      * 发送手机验证码
      */
     @PostMapping("code")
+    @ApiOperation("发送验证码")
     public Result sendCode(@RequestParam("phone") String phone, HttpSession session) {
-        // TODO 发送短信验证码并保存验证码
         return userService.sendCode(phone, session);
     }
 
@@ -47,8 +43,8 @@ public class UserController {
      * @param loginForm 登录参数，包含手机号、验证码；或者手机号、密码
      */
     @PostMapping("/login")
+    @ApiOperation("用户登录")
     public Result login(@RequestBody LoginFormDTO loginForm, HttpSession session){
-        // TODO 实现登录功能
         return userService.login(loginForm, session);
     }
 
@@ -57,18 +53,21 @@ public class UserController {
      * @return 无
      */
     @PostMapping("/logout")
+    @ApiOperation("用户登出")
     public Result logout(){
         // TODO 实现登出功能
         return Result.fail("功能未完成");
     }
 
     @GetMapping("/me")
+    @ApiOperation("用户详情页")
     public Result me(){
         UserDTO userDTO = UserHolder.getUser();
         return Result.ok(userDTO);
     }
 
     @GetMapping("/info/{id}")
+    @ApiOperation("查询用户详情")
     public Result info(@PathVariable("id") Long userId){
         // 查询详情
         UserInfo info = userInfoService.getById(userId);

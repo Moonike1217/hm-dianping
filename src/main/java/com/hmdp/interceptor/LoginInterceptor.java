@@ -21,6 +21,8 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -30,12 +32,13 @@ public class LoginInterceptor implements HandlerInterceptor {
     //前置拦截
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        UserDTO user = UserHolder.getUser();
-        if (user == null) {
-            //用户不存在，拦截请求，返回401状态码(鉴权不通过)
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return false;
-        }
+
+//        UserDTO user = UserHolder.getUser();
+//        if (user == null) {
+//            //用户不存在，拦截请求，返回401状态码(鉴权不通过)
+//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+//            return false;
+//        }
         return true;
     }
 

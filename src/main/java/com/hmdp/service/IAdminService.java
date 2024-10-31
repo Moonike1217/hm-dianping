@@ -3,20 +3,20 @@ package com.hmdp.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.hmdp.dto.LoginFormDTO;
 import com.hmdp.dto.Result;
+import com.hmdp.entity.Admin;
 import com.hmdp.entity.User;
 
 import javax.servlet.http.HttpSession;
 
-
-public interface IUserService extends IService<User> {
+public interface IAdminService extends IService<Admin> {
 
     /**
      * 用户登录
      * @param loginForm
-     * @param session
      * @return
      */
-    Result login(LoginFormDTO loginForm, HttpSession session);
+    Result login(LoginFormDTO loginForm);
+
 
     /**
      * 发送验证码
