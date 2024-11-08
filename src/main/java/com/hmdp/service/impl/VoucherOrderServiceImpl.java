@@ -93,20 +93,17 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     @Transactional
     public synchronized long createVoucherOrder(Long voucherId) {
         //5-.一人一单业务逻辑
-        //1.查询订单
+        //1.获取用户ID
         Long userId = UserHolder.getUser().getId();
-        //2.判断订单是否存在
+        //2.判断该用户是否已经下过单(订单数据库中查询是否存在记录:用户id=... 优惠券id-...)
         Integer count = query().eq("user_id", userId).eq("voucher_id", voucherId).count();
         if (count > 0) {
             throw new RuntimeException("该用户已经购买过该优惠券");
         }
 
-        //5.扣减库存
+        //5.用户未下过单，扣减库存(利用MySQL行锁解决了超卖问题)
         boolean success = seckillVoucherService.update()
                 .setSql("stock = stock - 1")
-                //CAS法实现乐观锁
-                //.eq("voucher_id", voucherId).eq("stock", voucher.getStock())
-
                 //大于零即可，通过MySQL的行锁完成
                 .eq("voucher_id", voucherId).gt("stock", 0)
                 .update();
@@ -114,7 +111,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             throw new RuntimeException("库存不足");
         }
 
-
+        //扣减库存成功，创建订单
         //6.创建订单
         VoucherOrder voucherOrder = new VoucherOrder();
         //6.1订单id

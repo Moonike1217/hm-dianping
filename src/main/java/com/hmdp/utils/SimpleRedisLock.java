@@ -1,7 +1,11 @@
 package com.hmdp.utils;
 
+import cn.hutool.core.lang.UUID;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 public class SimpleRedisLock implements ILock{
@@ -17,18 +21,20 @@ public class SimpleRedisLock implements ILock{
 
     // 锁前缀
     private static final String KEY_PREFIX = "lock:";
-
-    // key
-    String key = KEY_PREFIX + name;
+    private static final String ID_PREFIX = UUID.randomUUID().toString(true) + "-";
+    private static final DefaultRedisScript<Long> UNLOCK_SCRIPT;
+    static {
+        UNLOCK_SCRIPT = new DefaultRedisScript<>();
+        UNLOCK_SCRIPT.setLocation(new ClassPathResource("unlock.lua"));
+        UNLOCK_SCRIPT.setResultType(Long.class);
+    }
 
     @Override
     public boolean tryLock(long timeoutSec) {
-        /*
-            获取锁实际上就是set指令加上nx和ex参数
-         */
-
-        // value应当与线程有关(分布式锁) 所以获取线程标识(转换为字符串类型)
-        String value = String.valueOf(Thread.currentThread().getId());
+        // key
+        String key = KEY_PREFIX + name;
+        // value 应当与线程有关(分布式锁) 所以获取线程标识(转换为字符串类型)
+        String value = ID_PREFIX + String.valueOf(Thread.currentThread().getId());
 
         Boolean success = stringRedisTemplate.opsForValue()
                 .setIfAbsent(key, value, timeoutSec, TimeUnit.SECONDS);
@@ -39,9 +45,11 @@ public class SimpleRedisLock implements ILock{
 
     @Override
     public void unlock() {
-        /*
-            释放锁其实就是del key
-         */
-        stringRedisTemplate.delete(key);
+        //调用Lua脚本
+        stringRedisTemplate.execute(
+                UNLOCK_SCRIPT,
+                Collections.singletonList(KEY_PREFIX + name),
+                ID_PREFIX + String.valueOf(Thread.currentThread().getId())
+        );
     }
 }
