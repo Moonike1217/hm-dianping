@@ -61,8 +61,10 @@ public class UserController {
 
     @GetMapping("/me")
     @ApiOperation("用户详情页")
+
     public Result me(){
         UserDTO userDTO = UserHolder.getUser();
+
         return Result.ok(userDTO);
     }
 
