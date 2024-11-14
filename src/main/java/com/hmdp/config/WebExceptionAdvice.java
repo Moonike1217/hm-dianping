@@ -8,10 +8,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class WebExceptionAdvice {
-
     @ExceptionHandler(RuntimeException.class)
-    public Result handleRuntimeException(RuntimeException e) {
-        log.error(e.toString(), e);
-        return Result.fail("服务器异常");
+    public Result runtimeExceptionHandler(RuntimeException ex){
+        log.error("异常信息: {}", ex.getMessage());
+        ex.printStackTrace();
+        return Result.fail(ex.getMessage());
     }
 }
+

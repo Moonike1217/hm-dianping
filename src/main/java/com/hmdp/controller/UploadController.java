@@ -17,7 +17,7 @@ import java.util.UUID;
 @RequestMapping("upload")
 public class UploadController {
 
-    @PostMapping("blog")
+    @PostMapping("/blog")
     public Result uploadImage(@RequestParam("file") MultipartFile image) {
         try {
             // 获取原始文件名称

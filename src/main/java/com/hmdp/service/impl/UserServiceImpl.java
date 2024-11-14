@@ -15,6 +15,7 @@ import com.hmdp.service.IUserService;
 import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.RegexUtils;
 import com.hmdp.utils.SystemConstants;
+import com.hmdp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.logging.Log;
 import org.springframework.beans.BeanUtils;
@@ -23,6 +24,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,6 +46,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
      */
     @Override
     public Result login(LoginFormDTO loginForm, HttpSession session) {
+
         //1.检查验证码是否与之前Redis中存放的验证码一致
         String phone = loginForm.getPhone();
         String code = loginForm.getCode();
@@ -122,5 +125,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         log.info("已向{}发送验证码: {}", phone, code);
 
         return Result.ok();
+    }
+
+    @Override
+    public void logout(HttpServletRequest request) {
+        String key = RedisConstants.LOGIN_USER_KEY + request.getHeader("authorization");
+        stringRedisTemplate.delete(key);
+        String nickName = UserHolder.getUser().getNickName();
+        log.info("用户 {} 登出成功", nickName);
+        UserHolder.removeUser();
     }
 }
