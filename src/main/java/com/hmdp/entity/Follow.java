@@ -33,12 +33,12 @@ public class Follow implements Serializable {
     private Long id;
 
     /**
-     * 用户id
+     * 用户id(关注者)
      */
     private Long userId;
 
     /**
-     * 关联的用户id
+     * 关联的用户id(被关注者id)
      */
     private Long followUserId;
 

@@ -65,7 +65,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         // 查询博客相关用户
         queryBlogUser(blog);
         // 查询是否点赞
-        setBlogLiked(blog);
+        if (UserHolder.getUser() != null) {
+            setBlogLiked(blog);
+        }
 
         return blog;
     }
