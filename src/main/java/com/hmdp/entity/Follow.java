@@ -33,7 +33,7 @@ public class Follow implements Serializable {
     private Long id;
 
     /**
-     * 用户id(关注者)
+     * 用户id(关注者id)
      */
     private Long userId;
 
